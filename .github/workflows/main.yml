@@ -31,8 +31,6 @@ jobs:
           python-version: '3.12'
           architecture: 'x64' # optional x64 or x86. Defaults to x64 if not specified
           cache: 'pip'
-          cache-dependency-path: |
-            **/requirements*.txt
 
       # Install dependencies
       - name: Install Dependencies and Build sdist
