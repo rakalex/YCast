@@ -63,8 +63,8 @@ jobs:
           output-dir: build
           output-file: ycast
           python-flag: no_site
-          lto: true
-          follow-imports: true
+          lto: yes
+          follow-imports: yes
 
       - name: Upload Compilation Report
         if: always() # run even if the compile failed
