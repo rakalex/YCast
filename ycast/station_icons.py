@@ -22,8 +22,8 @@ def get_icon(station):
     if not os.path.exists(station_icon_file):
         logging.debug("Station icon cache miss. Fetching and converting station icon for station id '%s'", station.id)
         headers = {'User-Agent': generic.USER_AGENT + '/' + __version__}
-        try:
-            response = requests.get(station.icon, headers=headers)
+        try:            
+            response = requests.get(station.icon, headers=headers, timeout=5)
         except requests.exceptions.ConnectionError as err:
             logging.debug("Connection to station icon URL failed (%s)", err)
             return None
