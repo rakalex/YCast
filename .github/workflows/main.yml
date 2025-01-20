@@ -56,7 +56,10 @@ jobs:
           nuitka-version: main
           script-name: ycast/launch.py
           mode: onefile
-          include-data-files: ycast/templates/index.html=ycast/templates/index.html
+          include-data-files: |
+            ycast/templates/index.html=ycast/templates/index.html,
+            ycast/static/script.js=ycast/static/script.js,
+            ycast/static/style.css=ycast/static/style.css
           output-dir: build
           output-file: ycast
 
