@@ -28,13 +28,19 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.12'          
+          python-version: '3.12'
+
+      - name: Install Setuptools
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install setuptools
+          python -m pip install build
 
       # Install dependencies
       - name: Install Dependencies and Build sdist
         run: |          
-          python setup.py
-          python -m build # create the sdist build to populate the __version__ var
+          python setup.py sdist
+          python -m build
 
       # Build python script into a standalone exe
       - name: Build Executable
