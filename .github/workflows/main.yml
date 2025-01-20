@@ -36,8 +36,8 @@ jobs:
 
       # Install dependencies
       - name: Install Dependencies and Build sdist
-        run: |
-          pip install -U build setuptools
+        run: |          
+          python setup.py
           python -m build # create the sdist build to populate the __version__ var
 
       # Build python script into a standalone exe
