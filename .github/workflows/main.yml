@@ -74,5 +74,5 @@ jobs:
           path: |            
             build/ycast            
 
-      - name: Check if executable runs (.bin)        
-        run: ./build/*.bin --help
+      - name: Check if executable runs
+        run: ./build/ycast --help
