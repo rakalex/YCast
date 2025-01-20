@@ -62,6 +62,9 @@ jobs:
             ycast/static/style.css=ycast/static/style.css
           output-dir: build
           output-file: ycast
+          python-flag: no_site
+          lto: true
+          follow-imports: true
 
       - name: Upload Compilation Report
         if: always() # run even if the compile failed
