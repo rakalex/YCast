@@ -231,10 +231,10 @@ def landing_root(path=''):
 def landing(path=''):
     logging.debug('===============================================================')
     page = vtuner.Page()
-
-    page.add_item(vtuner.Directory('Radiobrowser', url_for('radiobrowser_landing', _external=True), 4))
-
+    
     page.add_item(vtuner.Directory('My Stations', url_for('my_stations_landing', _external=True), len(my_stations.get_category_directories())))
+    
+    page.add_item(vtuner.Directory('Radiobrowser', url_for('radiobrowser_landing', _external=True), 4))
 
     # stations = my_recentlystation.get_stations_by_vote()
     # if stations and len(stations) > 0:
