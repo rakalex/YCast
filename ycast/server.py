@@ -232,25 +232,26 @@ def landing(path=''):
     logging.debug('===============================================================')
     page = vtuner.Page()
     
-    page.add_item(vtuner.Directory('My Stations', url_for('my_stations_landing', _external=True), len(my_stations.get_category_directories())))
+    # page.add_item(vtuner.Directory('My Stations', url_for('my_stations_landing', _external=True), len(my_stations.get_category_directories())))
     
-    page.add_item(vtuner.Directory('Radiobrowser', url_for('radiobrowser_landing', _external=True), 4))
+    # page.add_item(vtuner.Directory('Radiobrowser', url_for('radiobrowser_landing', _external=True), 4))
 
     # stations = my_recentlystation.get_stations_by_vote()
-    # if stations and len(stations) > 0:
-    #     # make blank line (display is not shown)
-    #     # page.add_item(vtuner.Spacer())
+    stations = my_stations.get_stations_by_category("Favorites")
+    if stations and len(stations) > 0:
+        # make blank line (display is not shown)
+        # page.add_item(vtuner.Spacer())
 
-    #     for station in stations:
-    #         vtuner_station = station.to_vtuner()
-    #         if station_tracking:
-    #             vtuner_station.set_trackurl(
-    #                 request.host_url + PATH_ROOT + '/' + PATH_PLAY + '?id=' + vtuner_station.uid)
-    #         vtuner_station.icon = request.host_url + PATH_ROOT + '/' + PATH_ICON + '?id=' + vtuner_station.uid
-    #         page.add_item(vtuner_station)
+        for station in stations:
+            vtuner_station = station.to_vtuner()
+            if station_tracking:
+                vtuner_station.set_trackurl(
+                    request.host_url + PATH_ROOT + '/' + PATH_PLAY + '?id=' + vtuner_station.uid)
+            vtuner_station.icon = request.host_url + PATH_ROOT + '/' + PATH_ICON + '?id=' + vtuner_station.uid
+            page.add_item(vtuner_station)
 
-    # else:
-    #     page.add_item(vtuner.Display("'My Stations' feature not configured."))
+    else:
+        page.add_item(vtuner.Display("'My Stations' feature not configured."))
     page.set_count(-1)
     return page.to_string()
 
