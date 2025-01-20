@@ -35,11 +35,18 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install setuptools
           python -m pip install build
-
+    
       # Install dependencies
       - name: Install Dependencies and Build sdist
         run: |          
           python setup.py sdist
+          
+          python -m pip install requests
+          python -m pip install flask
+          python -m pip install PyYAML
+          python -m pip install Pillow
+          python -m pip install olefile
+          
           python -m build
 
       # Build python script into a standalone exe
