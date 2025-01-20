@@ -56,9 +56,9 @@ jobs:
           nuitka-version: main
           script-name: ycast/launch.py
           mode: onefile
-          options: |
-            --include-data-file=ycast/templates/index.html=ycast/templates/index.html
-            --output-filename=build/ycast
+          include-data-files: ycast/templates/index.html=ycast/templates/index.html
+          output-dir: build
+          output-file: ycast
 
       - name: Upload Compilation Report
         if: always() # run even if the compile failed
