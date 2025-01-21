@@ -9,9 +9,6 @@ import ycast.radiobrowser as radiobrowser
 import ycast.my_stations as my_stations
 import ycast.generic as generic
 import ycast.station_icons as station_icons
-import ycast.my_filter as my_filter
-# from ycast import my_recentlystation
-# from ycast.my_recentlystation import signal_station_selected
 
 PATH_ROOT = 'ycast'
 PATH_PLAY = 'play'
@@ -27,7 +24,6 @@ PATH_RADIOBROWSER_POPULAR = 'popular'
 
 station_tracking = False
 app = Flask(__name__)
-
 
 def run(config, address='0.0.0.0', port=8010):
     try:
@@ -168,9 +164,7 @@ def landing_api(path):
     if request.method == 'GET':
         if path.endswith('stations'):
             category = request.args.get('category')
-            stations = None
-            # if category.endswith('recently'):
-            #     stations = my_recentlystation.get_stations_by_recently()
+            stations = None    
             if category.endswith('voted'):
                 stations = radiobrowser.get_stations_by_votes()
             if category.endswith('language'):
@@ -237,7 +231,8 @@ def landing(path=''):
     # page.add_item(vtuner.Directory('Radiobrowser', url_for('radiobrowser_landing', _external=True), 4))
 
     # stations = my_recentlystation.get_stations_by_vote()
-    stations = my_stations.get_stations_by_category("Favorites")
+    # stations = my_stations.get_stations_by_category("Favorites")
+    stations = my_stations.get_all_bookmarks_stations()
     if stations and len(stations) > 0:
         # make blank line (display is not shown)
         # page.add_item(vtuner.Spacer())

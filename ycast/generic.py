@@ -2,9 +2,7 @@ import logging
 import os
 import hashlib
 import sys
-
 import yaml
-
 
 USER_AGENT = 'YCast'
 
@@ -25,8 +23,6 @@ class Directory:
 
     def to_dict(self):
         return {'name': self.name , 'displayname': self.displayname, 'count': self.item_count }
-
-
 
 def mk_writeable_dir(path):
     try:
@@ -115,15 +111,6 @@ def get_var_path():
         logging.error("Could not create cache folders (%s) because of access permissions", VAR_PATH)
         return None
     return VAR_PATH
-
-
-def get_recently_file():
-    return get_var_path() + '/recently.yml'
-
-
-def get_filter_file():
-    return get_var_path() + '/filter.yml'
-
 
 def get_stations_file():
     global stations_file_by_config

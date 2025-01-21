@@ -1,18 +1,21 @@
 import base64
-import json
 import uuid
 
 import requests
 import logging
 
-from ycast import __version__, my_filter
+from ycast import __version__
 import ycast.vtuner as vtuner
 import ycast.generic as generic
-from ycast.my_filter import check_station, begin_filter, end_filter, get_limit 
 from ycast.generic import get_json_attr
 
 API_ENDPOINT = "http://all.api.radio-browser.info"
 ID_PREFIX = "RB"
+MINIMUM_COUNT_GENRE = 5
+MINIMUM_COUNT_COUNTRY = 5
+MINIMUM_COUNT_LANGUAGE = 5
+DEFAULT_STATION_LIMIT = 200
+SHOW_BROKEN_STATIONS = False
 
 station_cache = {}
 
@@ -90,116 +93,87 @@ def get_station_by_id(vtune_id):
 def get_country_directories():
     country_directories = []
     apicall = 'countries'
-    if not get_limit('SHOW_BROKEN_STATIONS'):
+    if not SHOW_BROKEN_STATIONS:
         apicall += '?hidebroken=true'
     countries_raw = request(apicall)
     for country_raw in countries_raw:
         if get_json_attr(country_raw, 'name') and get_json_attr(country_raw, 'stationcount') and \
-                int(get_json_attr(country_raw, 'stationcount')) > get_limit('MINIMUM_COUNT_COUNTRY'):
-            if my_filter.chk_parameter('country', get_json_attr(country_raw, 'name')):
-                country_directories.append(generic.Directory(get_json_attr(country_raw, 'name'),
-                                                             get_json_attr(country_raw, 'stationcount')))
+                int(get_json_attr(country_raw, 'stationcount')) > MINIMUM_COUNT_COUNTRY:
+            country_directories.append(generic.Directory(get_json_attr(country_raw, 'name'),
+                                                         get_json_attr(country_raw, 'stationcount')))
     return country_directories
 
 
 def get_language_directories():
     language_directories = []
     apicall = 'languages'
-    if not get_limit('SHOW_BROKEN_STATIONS'):
+    if not SHOW_BROKEN_STATIONS:
         apicall += '?hidebroken=true'
     languages_raw = request(apicall)
     for language_raw in languages_raw:
         if get_json_attr(language_raw, 'name') and get_json_attr(language_raw, 'stationcount') and \
-                int(get_json_attr(language_raw, 'stationcount')) > get_limit('MINIMUM_COUNT_LANGUAGE'):
-            if my_filter.chk_parameter('languagecodes', get_json_attr(language_raw, 'iso_639')):
-                language_directories.append(generic.Directory(get_json_attr(language_raw, 'name'),
-                                                              get_json_attr(language_raw, 'stationcount'),
-                                                              get_json_attr(language_raw, 'name').title()))
+                int(get_json_attr(language_raw, 'stationcount')) > MINIMUM_COUNT_LANGUAGE:
+            language_directories.append(generic.Directory(get_json_attr(language_raw, 'name'),
+                                                          get_json_attr(language_raw, 'stationcount'),
+                                                          get_json_attr(language_raw, 'name').title()))
     return language_directories
 
 
 def get_genre_directories():
     genre_directories = []
     apicall = 'tags'
-    if not get_limit('SHOW_BROKEN_STATIONS'):
+    if not SHOW_BROKEN_STATIONS:
         apicall += '?hidebroken=true'
     genres_raw = request(apicall)
     for genre_raw in genres_raw:
         if get_json_attr(genre_raw, 'name') and get_json_attr(genre_raw, 'stationcount') and \
-                int(get_json_attr(genre_raw, 'stationcount')) > get_limit('MINIMUM_COUNT_GENRE'):
-            if my_filter.chk_parameter('tags', get_json_attr(genre_raw, 'name')):
-                genre_directories.append(generic.Directory(get_json_attr(genre_raw, 'name'),
+                int(get_json_attr(genre_raw, 'stationcount')) > MINIMUM_COUNT_GENRE:
+            genre_directories.append(generic.Directory(get_json_attr(genre_raw, 'name'),
                                                        get_json_attr(genre_raw, 'stationcount'),
                                                        get_json_attr(genre_raw, 'name').capitalize()))
     return genre_directories
 
 
 def get_stations_by_country(country):
-    begin_filter()
-    station_cache.clear()
     stations = []
-    stations_list_json = request('stations/search?order=name&reverse=false&countryExact=true&country=' + str(country))
-    for station_json in stations_list_json:
-        if check_station(station_json):
-            cur_station = Station(station_json)
-            station_cache[cur_station.id] = cur_station
-            stations.append(cur_station)
-    end_filter()
+    stations_json = request('stations/search?order=name&reverse=false&countryExact=true&country=' + str(country))
+    for station_json in stations_json:
+        if SHOW_BROKEN_STATIONS or get_json_attr(station_json, 'lastcheckok') == 1:
+            stations.append(Station(station_json))
     return stations
 
 
 def get_stations_by_language(language):
-    begin_filter()
-    station_cache.clear()
     stations = []
-    stations_list_json = \
-        request('stations/search?order=name&reverse=false&languageExact=true&language=' + str(language))
-    for station_json in stations_list_json:
-        if check_station(station_json):
-            cur_station = Station(station_json)
-            station_cache[cur_station.id] = cur_station
-            stations.append(cur_station)
-    end_filter()
+    stations_json = request('stations/search?order=name&reverse=false&languageExact=true&language=' + str(language))
+    for station_json in stations_json:
+        if SHOW_BROKEN_STATIONS or get_json_attr(station_json, 'lastcheckok') == 1:
+            stations.append(Station(station_json))
     return stations
 
 
 def get_stations_by_genre(genre):
-    begin_filter()
-    station_cache.clear()
     stations = []
-    stations_list_json = request('stations/search?order=name&reverse=false&tagExact=true&tag=' + str(genre))
-    for station_json in stations_list_json:
-        if check_station(station_json):
-            cur_station = Station(station_json)
-            station_cache[cur_station.id] = cur_station
-            stations.append(cur_station)
-    end_filter()
+    stations_json = request('stations/search?order=name&reverse=false&tagExact=true&tag=' + str(genre))
+    for station_json in stations_json:
+        if SHOW_BROKEN_STATIONS or get_json_attr(station_json, 'lastcheckok') == 1:
+            stations.append(Station(station_json))
     return stations
 
 
-def get_stations_by_votes(limit=get_limit('DEFAULT_STATION_LIMIT')):
-    begin_filter()
-    station_cache.clear()
+def get_stations_by_votes(limit=DEFAULT_STATION_LIMIT):
     stations = []
-    stations_list_json = request('stations?order=votes&reverse=true&limit=' + str(limit))
-    for station_json in stations_list_json:
-        if check_station(station_json):
-            cur_station = Station(station_json)
-            station_cache[cur_station.id] = cur_station
-            stations.append(cur_station)
-    end_filter()
+    stations_json = request('stations?order=votes&reverse=true&limit=' + str(limit))
+    for station_json in stations_json:
+        if SHOW_BROKEN_STATIONS or get_json_attr(station_json, 'lastcheckok') == 1:
+            stations.append(Station(station_json))
     return stations
 
 
-def search(name, limit=get_limit('DEFAULT_STATION_LIMIT')):
-    begin_filter()
-    station_cache.clear()
+def search(name, limit=DEFAULT_STATION_LIMIT):
     stations = []
-    stations_list_json = request('stations/search?order=name&reverse=false&limit=' + str(limit) + '&name=' + str(name))
-    for station_json in stations_list_json:
-        if check_station(station_json):
-            cur_station = Station(station_json)
-            station_cache[cur_station.id] = cur_station
-            stations.append(cur_station)
-    end_filter()
+    stations_json = request('stations/search?order=name&reverse=false&limit=' + str(limit) + '&name=' + str(name))
+    for station_json in stations_json:
+        if SHOW_BROKEN_STATIONS or get_json_attr(station_json, 'lastcheckok') == 1:
+            stations.append(Station(station_json))
     return stations

@@ -1,13 +1,7 @@
-import json
 import logging
-import os
 import unittest
-from io import StringIO
 
-import flask
-
-from ycast import my_filter, generic, radiobrowser, my_recentlystation
-
+from ycast import my_filter, generic, radiobrowser
 
 class MyTestCase(unittest.TestCase):
 
@@ -124,60 +118,6 @@ class MyTestCase(unittest.TestCase):
         assert result == 5
         result = my_filter.get_limit('SHOW_BROKEN_STATIONS')
         assert result == False
-
-    def test_recently_hit(self):
-
-        try:
-            os.remove(my_recentlystation.get_recently_file())
-        except Exception:
-            pass
-
-        result = my_recentlystation.get_stations_by_vote()
-        assert len(result) == 0
-
-        result = my_recentlystation.get_recently_stations_dictionary()
-        assert result is None
-
-        i = 0
-        while i < 10:
-            my_recentlystation.signal_station_selected('NAME ' + str(i), 'http://dummy/' + str(i),
-                                                       'http://icon' + str(i))
-            i = i+1
-
-        result = my_recentlystation.get_recently_stations_dictionary()
-        assert my_recentlystation.directory_name()
-        assert result[my_recentlystation.directory_name()]
-
-        my_recentlystation.signal_station_selected('Konverenz: Sport', 'http://dummy/' + str(i),
-                                                   'http://icon' + str(i))
-        my_recentlystation.signal_station_selected('Konverenz: Sport', 'http://dummy/' + str(i),
-                                                   'http://icon' + str(i))
-        my_recentlystation.signal_station_selected('Konverenz: Sport', 'http://dummy/' + str(i),
-                                                   'http://icon' + str(i))
-
-        i = 6
-        while i < 17:
-            my_recentlystation.signal_station_selected('NAME ' + str(i), 'http://dummy/' + str(i),
-                                                       'http://icon' + str(i))
-            i = i+1
-
-        result = my_recentlystation.get_recently_stations_dictionary()
-        assert result[my_recentlystation.directory_name()]
-
-        result = my_recentlystation.get_stations_by_vote()
-        assert len(result) == 5
-
-        j = 0
-        while j < 6:
-            i = 6
-            while i < 9:
-                my_recentlystation.signal_station_selected('NAME ' + str(i), 'http://dummy/' + str(i),
-                                                           'http://icon' + str(i))
-                i = i+1
-            j = j+1
-        result = my_recentlystation.get_stations_by_vote()
-        assert len(result) == 5
-
 
 if __name__ == '__main__':
     unittest.main()
