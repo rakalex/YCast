@@ -1,5 +1,5 @@
 window.onload = function () {
-    document.getElementById('idRequestSrc').value = 'recently';
+    document.getElementById('idRequestSrc').value = '';
     document.getElementById('idLanOrCountSelect').disabled = true;
     var requestSrc = document.getElementById('idRequestSrc').value;
     var param = document.getElementById('idLanOrCountSelect').value;
@@ -136,7 +136,6 @@ function deleteElement(event, objElem) {
         saveBookmarks();
     }
 }
-
 
 function copyElementToBookmark(event, objElem) {
     if (objElem) {
@@ -281,7 +280,6 @@ function setBookmarkcategoryList() {
         }
     }
 }
-
 
 function setParamlist() {
     var category = document.getElementById('idRequestSrc').value
