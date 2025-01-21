@@ -14,7 +14,8 @@ jobs:
 
       matrix:
         os:
-          - ubuntu-latest          
+          - ubuntu-latest
+          - windows-latest
 
     runs-on: ${{ matrix.os }}
 
@@ -73,9 +74,15 @@ jobs:
       - name: Upload Executable
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ runner.os }} Build
-          path: |            
-            build/ycast            
+          name: ${{ runner.os }} Build          
+          path: |
+            build/*.exe
+            build/*.bin
+            build/ycast
+            
+      - name: Check if executable runs (.exe)
+        if: ${{ runner.os == 'Windows' }}
+        run: ./build/*.exe --version
 
       - name: Check if executable runs
         run: ./build/ycast --help
