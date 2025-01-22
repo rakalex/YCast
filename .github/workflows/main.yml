@@ -20,7 +20,7 @@ jobs:
           
         architecture:
           #- amd64
-          - armv8l 
+          - armhf 
 
     runs-on: ${{ matrix.os }}
 
@@ -56,10 +56,10 @@ jobs:
           python -m build
 
       - name: Set up ARMv8l cross-compilation tools
-        if: ${{ matrix.architecture == 'armv8l' }}
+        if: ${{ matrix.architecture == 'armhf' }}
         run: |
-          sudo apt-get update
-          sudo apt-get install -y gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf
+          sudo apt-get update          
+          sudo apt-get install gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf
 
       # Build python script into a standalone exe
       - name: Build Executable
