@@ -1,26 +1,23 @@
-name: Compile Executables
-
 # Controls when the workflow will run
 on:
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
   release:
-    types: [ created ]
+    types: [created]
 
 jobs:
   build:
+    name: Build and Compile Executables
     strategy:
-      fail-fast: false # needed to keep running other os builds even if one fails
-
+      fail-fast: false  # needed to keep running other OS builds even if one fails
       matrix:
         os:
           #- ubuntu-latest
           #- windows-latest
           - ubuntu-20.04
-          
         architecture:
           #- amd64
-          - armhf 
+          - armv8l
 
     runs-on: ${{ matrix.os }}
 
@@ -30,6 +27,12 @@ jobs:
         with: # needed for tag info for nightly sdist builds
           fetch-depth: 0
           fetch-tags: true
+
+      - name: Set up ARMv8l cross-compilation tools
+        if: matrix.architecture == 'armv8l'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf
 
       - name: Setup Python
         uses: actions/setup-python@v4
@@ -44,22 +47,14 @@ jobs:
     
       # Install dependencies
       - name: Install Dependencies and Build sdist
-        run: |          
+        run: |
           python setup.py sdist
-          
           python -m pip install requests
           python -m pip install flask
           python -m pip install PyYAML
           python -m pip install Pillow
           python -m pip install olefile
-          
           python -m build
-
-      - name: Set up ARMv8l cross-compilation tools
-        if: ${{ matrix.architecture == 'armhf' }}
-        run: |
-          sudo apt-get update          
-          sudo apt-get install gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf     
 
       # Build python script into a standalone exe
       - name: Build Executable
@@ -74,7 +69,6 @@ jobs:
             ycast/static/style.css=ycast/static/style.css
           output-dir: build
           output-file: ycast
-          extra-options: "--clang --cross-compile --python-for-scons=$(which python) --target=arm-linux-gnueabihf"
 
       - name: Upload Compilation Report
         if: always() # run even if the compile failed
@@ -86,14 +80,14 @@ jobs:
       - name: Upload Executable
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ runner.os }} Build          
+          name: ${{ runner.os }} Build
           path: |
             build/*.exe
             build/*.bin
             build/ycast
-            
+
       - name: Check if executable runs (.exe)
-        if: ${{ runner.os == 'Windows' }}
+        if: runner.os == 'Windows'
         run: ./build/*.exe --version
 
       - name: Check if executable runs
