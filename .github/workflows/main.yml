@@ -14,8 +14,13 @@ jobs:
 
       matrix:
         os:
-          - ubuntu-latest
-          - windows-latest
+          #- ubuntu-latest
+          #- windows-latest
+          - ubuntu-20.04
+          
+        architecture:
+          #- amd64
+          - armv8l 
 
     runs-on: ${{ matrix.os }}
 
@@ -29,7 +34,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.13'
+          python-version: '3.12'
 
       - name: Install Setuptools
         run: |
@@ -49,6 +54,12 @@ jobs:
           python -m pip install olefile
           
           python -m build
+
+      - name: Set up ARMv8l cross-compilation tools
+        if: ${{ matrix.architecture == 'armv8l' }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf
 
       # Build python script into a standalone exe
       - name: Build Executable
