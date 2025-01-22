@@ -12,51 +12,47 @@ jobs:
       fail-fast: false  # needed to keep running other OS builds even if one fails
       matrix:
         os:
-          #- ubuntu-latest
-          #- windows-latest
           - ubuntu-20.04
+          #- windows-latest
         architecture:
           #- amd64
-          - armv8l
+          #- armv8l
+          - i386
 
     runs-on: ${{ matrix.os }}
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with: # needed for tag info for nightly sdist builds
+        with:
           fetch-depth: 0
           fetch-tags: true
 
-      - name: Set up ARMv8l cross-compilation tools
+      - name: Set up Cross-Compilation Tools
         if: matrix.architecture == 'armv8l'
         run: |
           sudo apt-get update
           sudo apt-get install -y gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf
+
+      - name: Set up i386 Compilation Tools
+        if: matrix.architecture == 'i386'
+        run: |
+          sudo dpkg --add-architecture i386
+          sudo apt-get update
+          sudo apt-get install -y gcc-multilib g++-multilib musl-tools
 
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.12'
 
-      - name: Install Setuptools
+      - name: Install Dependencies
         run: |
-          python -m pip install --upgrade pip
-          python -m pip install setuptools
-          python -m pip install build
-    
-      # Install dependencies
-      - name: Install Dependencies and Build sdist
-        run: |
-          python setup.py sdist
-          python -m pip install requests
-          python -m pip install flask
-          python -m pip install PyYAML
-          python -m pip install Pillow
-          python -m pip install olefile
-          python -m build
+          python -m pip install --upgrade pip setuptools build requests flask PyYAML Pillow olefile
 
-      # Build python script into a standalone exe
+      - name: Build Source Distribution
+        run: python setup.py sdist
+
       - name: Build Executable
         uses: Nuitka/Nuitka-Action@main
         with:
@@ -71,24 +67,25 @@ jobs:
           output-file: ycast
 
       - name: Upload Compilation Report
-        if: always() # run even if the compile failed
+        if: always()  # run even if the compile failed
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ runner.os }} compilation report
+          name: ${{ matrix.os }} compilation report
           path: compilation-report.xml
 
       - name: Upload Executable
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ runner.os }} Build
+          name: ${{ matrix.os }} Build
           path: |
             build/*.exe
             build/*.bin
             build/ycast
 
-      - name: Check if executable runs (.exe)
+      - name: Test Executable on Windows
         if: runner.os == 'Windows'
         run: ./build/*.exe --version
 
-      - name: Check if executable runs
+      - name: Test Executable on Linux
+        if: runner.os != 'Windows'
         run: ./build/ycast --help
