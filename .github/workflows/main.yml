@@ -59,7 +59,7 @@ jobs:
         if: ${{ matrix.architecture == 'armhf' }}
         run: |
           sudo apt-get update          
-          sudo apt-get install gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf
+          sudo apt-get install gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf     
 
       # Build python script into a standalone exe
       - name: Build Executable
@@ -74,6 +74,7 @@ jobs:
             ycast/static/style.css=ycast/static/style.css
           output-dir: build
           output-file: ycast
+          extra-options: "--clang --cross-compile --python-for-scons=$(which python) --target=arm-linux-gnueabihf"
 
       - name: Upload Compilation Report
         if: always() # run even if the compile failed
