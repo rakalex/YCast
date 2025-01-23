@@ -110,7 +110,7 @@ class YCastHandler(http.server.SimpleHTTPRequestHandler):
         self.send_response(HTTPStatus.OK)
         self.send_header('Content-type', 'text/html')
         self.end_headers()
-        with open('ycast/templates/index.html', 'rb') as file:
+        with open('templates/index.html', 'rb') as file:
             self.wfile.write(file.read())
 
     def handle_my_stations(self, path, query):
