@@ -1,63 +1,242 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
-<html>
+<!DOCTYPE html>
+<html lang="en">
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <link rel="stylesheet" href="/static/style.css">
-    <script type="text/javascript" src="/static/script.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>YCast</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        *:focus {
+            outline: 2px solid red;
+        }
+    </style>
 </head>
 
-<body>
-    <div class="page">
-        <div class="header">
-            <h2>YCast advanced</h2>
-            <div>
-                <label for="idRequestSrc">station-source:</label>
-                <select tabindex="1" id="idRequestSrc" name="category" oninput="onInputSelect(event, this)">                    
-                    <option value="voted">voted</option>
-                    <option value="language">language</option>
-                    <option value="country">country</option>
+<body class="bg-gray-100 text-gray-900">
+    <div class="container mx-auto p-4">
+        <div class="bg-blue-600 text-white text-center p-4 rounded-lg mb-4">
+            <h2 class="text-xl font-bold">YCast Advanced</h2>
+            <div class="mb-3">
+                <label for="idRequestSrc" class="block mb-2">Station Source:</label>
+                <select id="idRequestSrc" name="category" class="form-select block w-full p-2 border border-gray-300 rounded-md text-black bg-white">
+                    <option value="" class="text-gray-500">Select...</option>                    
+                    <option value="language" class="text-black">Language</option>
+                    <option value="country" class="text-black">Country</option>
                 </select>
             </div>
             <div>
-                <label for="idLanOrCountSelect">language or country:</label>
-                <input type="search" tabindex="2" list="listLangOrCountry" id="idLanOrCountSelect" autocomplete=off onclick="this.value=''" onfocus="this.value=''" onkeyup="keyUpEvent(event,this)" oninput="onInputSelect(event, this)">
-                <datalist id="listLangOrCountry">
-                </datalist>
+                <label for="idLanOrCountSelect" class="block mb-2">Language or Country:</label>
+                <select id="idLanOrCountSelect" class="form-select block w-full p-2 border border-gray-300 rounded-md text-black bg-white" disabled>
+                    <option value="" selected disabled class="text-gray-500">Select an option</option>
+                </select>
             </div>
         </div>
-        <div class="content">
-            <div class="contentheader">
-                <label class="miniinfo" id="stationcount">0/0</label>
-                <h3>Stations</h3>
-                <label for="stationsearch">search:</label>
-                <input type="search" tabindex="3" type="search" id="stationsearch" onkeyup="keyUpEvent(event,this)" oninput="onInputSelect(event, this)">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="bg-white rounded-lg shadow-lg p-4">
+                <div class="mb-3">
+                    <label class="text-gray-500" id="stationcount">0/0</label>
+                    <h3 class="text-lg font-semibold mb-2">Stations</h3>
+                    <label for="stationsearch" class="block mb-2">Search:</label>
+                    <input type="search" id="stationsearch" class="form-input block w-full p-2 border border-gray-300 rounded-md">
+                </div>
+                <ul id="stationList" style="display:none" class="list-none p-0 m-0 max-h-70 overflow-auto border border-gray-300 rounded-md"></ul>
             </div>
-            <div class="contentitems" title="Clicking on this item copies it as a bookmark" tabindex="4">
-                <ul id="stationList">
-                </ul>
-            </div>
-        </div>
-        <div class="content">
-            <div class="contentheader">
-                <h3>Bookmarks</h3>
-                <label for="idcategory">category:</label>
-                <input type="search" tabindex="10000" list="categoryList" id="idcategory" title="filter existing or a new category, if empty all bookmarks are shown." onkeyup="keyUpEvent(event,this)" oninput="onInputSelect(event, this)">
-                <datalist id="categoryList">
-                    <option value="Actual">
-                    <option value="Pop">
-                    <option value="Classics">
-                </datalist>
-
-            </div>
-            <div class="contentitems" title="Clicking on this item will delete it" tabindex="5">
-                <ul id="bookmarkList">
-                </ul>
+            <div class="bg-white rounded-lg shadow-lg p-4">
+                <div class="mb-3">
+                    <h3 class="text-lg font-semibold mb-2">Bookmarks</h3>
+                </div>
+                <ul id="bookmarkList" class="list-none p-0 m-0 max-h-70 overflow-auto border border-gray-300 rounded-md"></ul>
             </div>
         </div>
     </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const idRequestSrc = document.getElementById('idRequestSrc');
+            const idLanOrCountSelect = document.getElementById('idLanOrCountSelect');
+            const stationsearch = document.getElementById('stationsearch');            
+
+            idRequestSrc.addEventListener('input', handleInputSelect);
+            idLanOrCountSelect.addEventListener('change', handleInputSelect);
+            stationsearch.addEventListener('input', handleInputSelect);            
+
+            idLanOrCountSelect.disabled = true;
+            requestStationList('', '', true);            
+        });
+
+        const createItem = (name, icon, description) => {
+            const itemElem = document.createElement('li');
+            itemElem.className = 'flex items-center border-b cursor-pointer';
+        
+            const itemIcon = document.createElement('div');
+            itemIcon.className = 'm-2';
+        
+            if (icon) {
+                const itemIconImg = document.createElement('img');
+                itemIconImg.src = icon;
+                itemIconImg.className = 'img-fluid';
+                itemIconImg.style.width = '40px';
+                //itemIconImg.style.height = '40px';
+                itemIcon.appendChild(itemIconImg);
+            }
+        
+            const itemText = document.createElement('div');
+            itemText.className = 'flex-grow';
+            const h4Text = document.createElement('label');
+            h4Text.textContent = name;
+        
+            const desc = document.createElement('p');
+            desc.textContent = description;
+        
+            itemText.appendChild(h4Text);
+            itemText.appendChild(desc);
+            itemElem.appendChild(itemIcon);
+            itemElem.appendChild(itemText);
+        
+            return itemElem;
+        };
+
+        const requestStationList = async (category, param, isBookmarkList) => {
+            try {
+                let url = `api/${isBookmarkList ? 'bookmarks' : 'stations'}?category=${category}`;
+                if (param) {
+                    if (category.includes('language')) {
+                        url += `&language=${param.toLowerCase()}`;
+                    } else if (category.includes('country')) {
+                        url += `&country=${param}`;
+                    }
+                }
+
+                const response = await fetch(url);
+                const data = await response.json();
+                const listNode = document.getElementById(isBookmarkList ? 'bookmarkList' : 'stationList');
+                listNode.innerHTML = '';
+
+                data.forEach(station => {
+                    const listItem = createItem(station.name, station.icon, station.description);
+                    listItem.dataset.json = JSON.stringify(station);
+                    listItem.dataset.search = isBookmarkList ? station.description : `${station.name}#${station.description}`.toUpperCase();
+                    listItem.dataset.category = station.description;
+                    listItem.dataset.isEmptyElement = 'false';
+                    listItem.addEventListener('click', () => isBookmarkList ? deleteElement(listItem) : copyElementToBookmark(listItem));
+                    listNode.appendChild(listItem);
+                });
+
+                if(!isBookmarkList){
+                    document.getElementById('stationcount').textContent = `${data.length}/${data.length}`;
+                    document.getElementById('stationList').style.display = "block";
+                }
+            } catch (error) {
+                console.error(error);
+            }
+        };
+
+        const deleteElement = (element) => {
+            if (element) {
+                element.remove();
+                refreshFilteredList(document.getElementById('bookmarkList'), 'Others', true);                
+                saveBookmarks();
+            }
+        };
+
+        const copyElementToBookmark = (element) => {
+            if (element) {
+                const bookmarkList = document.getElementById('bookmarkList');
+                const station = JSON.parse(element.dataset.json);                
+                station.description = 'Others';
+
+                const listItem = createItem(station.name, station.icon, station.description);
+                listItem.dataset.json = JSON.stringify(station);
+                listItem.dataset.search = station.description;
+                listItem.dataset.category = station.description;
+                listItem.dataset.isEmptyElement = 'false';
+                listItem.addEventListener('click', () => deleteElement(listItem));
+
+                bookmarkList.appendChild(listItem);
+                refreshFilteredList(bookmarkList, 'Others', true);                
+                saveBookmarks();
+            }
+        };
+
+        const refreshFilteredList = (listNode, filterText, isExactMatch) => {
+            const listItems = Array.from(listNode.childNodes);
+            let totalCount = 0;
+            let filteredCount = 0;
+        
+            listItems.forEach(item => {
+                if (item.dataset.isEmptyElement === 'true') {
+                    item.classList.toggle('hidden', totalCount !== 0);
+                } else {
+                    totalCount++;
+                    const isMatch = isExactMatch ? item.dataset.search === filterText : item.dataset.search.includes(filterText);
+                    console.log(`Item: ${item.dataset.search}, Filter: ${filterText}, Match: ${isMatch}`);
+                    item.classList.toggle('hidden', !isMatch);
+                    if (isMatch) filteredCount++;
+                }
+            });
+        
+            console.log(`Filtered: ${filteredCount}/${totalCount}`);
+            return `${filteredCount}/${totalCount}`;
+        };
+
+        const handleInputSelect = (event) => {
+            const { id, value } = event.target;
+            switch (id) {
+                case 'idRequestSrc':
+                    const paramElem = document.getElementById('idLanOrCountSelect');
+                    if (value === 'language' || value === 'country') {
+                        setParamList(value);
+                        paramElem.disabled = false;
+                        paramElem.focus();
+                    } else {
+                        paramElem.disabled = true;
+                    }
+                    break;
+                case 'idLanOrCountSelect':
+                    requestStationList(document.getElementById('idRequestSrc').value, value, false);
+                    break;                
+                case 'stationsearch':
+                    document.getElementById('stationcount').textContent = refreshFilteredList(document.getElementById('stationList'), value.toUpperCase(), false);
+                    break;
+            }
+        };
+
+        const setParamList = async (category) => {
+            try {
+                const response = await fetch(`api/paramlist?category=${category}`);
+                const data = await response.json();
+                const paramList = document.getElementById('idLanOrCountSelect');
+                paramList.innerHTML = '<option value="" selected disabled>Select an option</option>';
+
+                data.forEach(param => {
+                    const option = document.createElement('option');
+                    option.value = param.name;
+                    option.textContent = param.name;
+                    paramList.appendChild(option);
+                });
+            } catch (error) {
+                console.error(error);
+            }
+        };
+
+        const saveBookmarks = async () => {
+            const bookmarks = Array.from(document.getElementById('bookmarkList').childNodes)
+                .filter(item => item.dataset.isEmptyElement === 'false')
+                .map(item => JSON.parse(item.dataset.json));
+
+            try {
+                const response = await fetch('api/bookmarks', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(bookmarks)
+                });
+                const data = await response.json();
+                console.log(data);
+            } catch (error) {
+                console.error(error);
+            }
+        };
+    </script>
 </body>
 
 </html>
