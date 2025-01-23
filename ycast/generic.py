@@ -2,7 +2,7 @@ import logging
 import os
 import hashlib
 import sys
-import yaml
+import json
 
 USER_AGENT = 'YCast'
 
@@ -22,7 +22,7 @@ class Directory:
             self.displayname = name
 
     def to_dict(self):
-        return {'name': self.name , 'displayname': self.displayname, 'count': self.item_count }
+        return {'name': self.name, 'displayname': self.displayname, 'count': self.item_count}
 
 def mk_writeable_dir(path):
     try:
@@ -38,8 +38,8 @@ def mk_writeable_dir(path):
 def init_base_dir(path_element):
     global VAR_PATH, CACHE_PATH
     logging.info('Initialize base directory %s', path_element)
-    logging.debug('    HOME: %s',os.path.expanduser("~"))
-    logging.debug('     PWD: %s',os.getcwd())
+    logging.debug('    HOME: %s', os.path.expanduser("~"))
+    logging.debug('     PWD: %s', os.getcwd())
     var_dir = None
 
     if not os.getcwd().endswith('/ycast'):
@@ -116,7 +116,7 @@ def get_stations_file():
     global stations_file_by_config
     if stations_file_by_config:
         return stations_file_by_config
-    return get_var_path() + '/stations.yml'
+    return get_var_path() + '/stations.json'
 
 
 def set_stations_file(stations_file):
@@ -136,25 +136,25 @@ def get_checksum(feed, charlimit=12):
     return str(digest_xor_fold[:charlimit]).upper()
 
 
-def read_yaml_file(file_name):
+def read_json_file(file_name):
     try:
         with open(file_name, 'r') as f:
-            return yaml.safe_load(f)
+            return json.load(f)
     except FileNotFoundError:
-        logging.warning("YAML file '%s' not found", file_name)
-    except yaml.YAMLError as e:
-        logging.error("YAML format error in '%':\n    %s", file_name, e)
+        logging.warning("JSON file '%s' not found", file_name)
+    except json.JSONDecodeError as e:
+        logging.error("JSON format error in '%s':\n    %s", file_name, e)
     return None
 
 
-def write_yaml_file(file_name, dictionary):
+def write_json_file(file_name, dictionary):
     try:
         with open(file_name, 'w') as f:
             # no sort please
-            yaml.dump(dictionary, f, sort_keys=False)
+            json.dump(dictionary, f, indent=4)
             return True
-    except yaml.YAMLError as e:
-        logging.error("YAML format error in '%':\n    %s", file_name, e)
+    except json.JSONDecodeError as e:
+        logging.error("JSON format error in '%s':\n    %s", file_name, e)
     except Exception as ex:
         logging.error("File not written '%s':\n    %s", file_name, ex)
     return False
@@ -179,9 +179,9 @@ def writelns_txt_file(file_name, line_list):
     return False
 
 
-def get_json_attr(json, attr):
+def get_json_attr(json_obj, attr):
     try:
-        return json[attr]
+        return json_obj[attr]
     except Exception as ex:
         logging.debug("json: attr '%s' not found: %s", attr, ex)
         return None

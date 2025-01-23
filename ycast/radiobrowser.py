@@ -1,8 +1,9 @@
 import base64
 import uuid
-
-import requests
 import logging
+import http.client
+import json
+from urllib.parse import urlparse
 
 from ycast import __version__
 import ycast.vtuner as vtuner
@@ -18,7 +19,6 @@ DEFAULT_STATION_LIMIT = 200
 SHOW_BROKEN_STATIONS = False
 
 station_cache = {}
-
 
 class Station:
     def __init__(self, station_json):
@@ -45,6 +45,7 @@ class Station:
         return vtuner.Station(self.id, self.name,
                               self.description, self.url, self.icon,
                               self.tags[0], self.countrycode, self.codec, self.bitrate, None)
+
     def to_dict(self):
         return {'name': self.name , 'url': self.url, 'icon': self.icon, 'description': self.description }
 
@@ -52,7 +53,6 @@ class Station:
         try:
             playable_url_json = request('url/' + str(self.stationuuid))
             self.url = playable_url_json['url']
-
         except (IndexError, KeyError):
             logging.error("Could not retrieve first playlist item for station with id '%s'", self.stationuuid)
 
@@ -60,15 +60,24 @@ class Station:
 def request(url):
     logging.debug("Radiobrowser API request: %s", url)
     headers = {'content-type': 'application/json', 'User-Agent': generic.USER_AGENT + '/' + __version__}
+
     try:
-        response = requests.get(API_ENDPOINT + '/json/' + url, headers=headers)
-    except requests.exceptions.ConnectionError as err:
+        # Parse the URL
+        parsed_url = urlparse(API_ENDPOINT + '/json/' + url)
+        connection = http.client.HTTPConnection(parsed_url.netloc, timeout=5)
+        connection.request('GET', parsed_url.path + '?' + parsed_url.query, headers=headers)
+        response = connection.getresponse()
+        data = response.read()
+        connection.close()
+    except Exception as err:
         logging.error("Connection to Radiobrowser API failed (%s)", err)
         return {}
-    if response.status_code != 200:
-        logging.error("Could not fetch data from Radiobrowser API (HTML status %s)", response.status_code)
+
+    if response.status != 200:
+        logging.error("Could not fetch data from Radiobrowser API (HTML status %s)", response.status)
         return {}
-    return response.json()
+
+    return json.loads(data)
 
 
 def get_station_by_id(vtune_id):
@@ -77,7 +86,7 @@ def get_station_by_id(vtune_id):
     uidbase64 = generic.get_stationid_without_prefix(vtune_id)
     uid = str(uuid.UUID(base64.urlsafe_b64decode(uidbase64).hex()))
     if station_cache:
-        station = station_cache[vtune_id]
+        station = station_cache.get(vtune_id)
         if station:
             return station
     # no item in cache, do request

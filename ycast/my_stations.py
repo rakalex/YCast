@@ -60,7 +60,7 @@ def get_stations_by_category(category):
     return stations
 
 def get_all_bookmarks_stations():
-    bm_stations_category = generic.read_yaml_file(generic.get_stations_file())
+    bm_stations_category = generic.read_json_file(generic.get_stations_file())
     stations = []
     if bm_stations_category :
         for category in bm_stations_category:
@@ -87,5 +87,5 @@ def putBookmarkJson(elements):
         else:
             newDict[stationJson['description']][stationJson['name']] = stationJson['url']
 
-    generic.write_yaml_file(generic.get_stations_file(),newDict)
+    generic.write_json_file(generic.get_stations_file(),newDict)
     return elements
