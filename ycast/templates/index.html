@@ -64,7 +64,7 @@
             requestStationList('', '', true);            
         });
 
-        const createItem = (name, icon, description) => {
+        const createItem = (name, icon, description, isBookmarkList) => {
             const itemElem = document.createElement('li');
             itemElem.className = 'flex items-center border-b cursor-pointer';
         
@@ -83,13 +83,14 @@
             const itemText = document.createElement('div');
             itemText.className = 'flex-grow';
             const h4Text = document.createElement('label');
-            h4Text.textContent = name;
-        
-            const desc = document.createElement('p');
-            desc.textContent = description;
+            h4Text.textContent = name;            
         
             itemText.appendChild(h4Text);
-            itemText.appendChild(desc);
+            if (!isBookmarkList){
+                const desc = document.createElement('p');
+                desc.textContent = description;
+                itemText.appendChild(desc);
+            }
             itemElem.appendChild(itemIcon);
             itemElem.appendChild(itemText);
         
@@ -113,7 +114,7 @@
                 listNode.innerHTML = '';
 
                 data.forEach(station => {
-                    const listItem = createItem(station.name, station.icon, station.description);
+                    const listItem = createItem(station.name, station.icon, station.description, isBookmarkList);
                     listItem.dataset.json = JSON.stringify(station);
                     listItem.dataset.search = isBookmarkList ? station.description : `${station.name}#${station.description}`.toUpperCase();
                     listItem.dataset.category = station.description;
@@ -145,7 +146,7 @@
                 const station = JSON.parse(element.dataset.json);                
                 station.description = 'Others';
 
-                const listItem = createItem(station.name, station.icon, station.description);
+                const listItem = createItem(station.name, station.icon, station.description, false);
                 listItem.dataset.json = JSON.stringify(station);
                 listItem.dataset.search = station.description;
                 listItem.dataset.category = station.description;
