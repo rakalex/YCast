@@ -25,7 +25,7 @@ PATH_RADIOBROWSER_POPULAR = 'popular'
 station_tracking = False
 app = Flask(__name__)
 
-def run(config, address='0.0.0.0', port=8010):
+def run(config, address='0.0.0.0', port=80):
     try:
         generic.set_stations_file(config)
         app.run(host=address, port=port)
