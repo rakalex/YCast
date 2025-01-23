@@ -1,0 +1,81 @@
+name: Compile Executables
+
+# Controls when the workflow will run
+on:
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+  release:
+    types: [ created ]
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false # needed to keep running other os builds even if one fails
+
+      matrix:
+        os:
+          - ubuntu-latest          
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with: # needed for tag info for nightly sdist builds
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.13'
+
+      - name: Install Setuptools
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install setuptools
+          python -m pip install build
+    
+      # Install dependencies
+      - name: Install Dependencies and Build sdist
+        run: |          
+          python setup.py sdist
+          
+          python -m pip install requests
+          python -m pip install flask
+          python -m pip install PyYAML
+          python -m pip install Pillow
+          python -m pip install olefile
+          
+          python -m build
+
+      # Build python script into a standalone exe
+      - name: Build Executable
+        uses: Nuitka/Nuitka-Action@main
+        with:
+          nuitka-version: main
+          script-name: ycast
+          mode: onefile
+          include-data-files: |
+            ycast/templates/index.html=ycast/templates/index.html
+            ycast/static/script.js=ycast/static/script.js
+            ycast/static/style.css=ycast/static/style.css
+          output-dir: build
+          output-file: ycast
+
+      - name: Upload Compilation Report
+        if: always() # run even if the compile failed
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ runner.os }} compilation report
+          path: compilation-report.xml
+
+      - name: Upload Executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ runner.os }} Build
+          path: |            
+            build/ycast            
+
+      - name: Check if executable runs
+        run: ./build/ycast --help
