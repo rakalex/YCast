@@ -243,7 +243,7 @@ class YCastHandler(http.server.SimpleHTTPRequestHandler):
         content_length = int(self.headers['Content-Length'])
         post_data = self.rfile.read(content_length)
         json_data = json.loads(post_data)
-        result = my_stations.putBookmarkJson(json_data)
+        result = my_stations.put_bookmark_json(json_data)
         self.respond_json(result)
 
     def handle_station_search(self, query):
