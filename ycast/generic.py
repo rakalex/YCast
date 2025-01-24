@@ -6,63 +6,54 @@ import json
 
 USER_AGENT = 'YCast'
 
-# initialize it start
 VAR_PATH = ''
 CACHE_PATH = ''
 stations_file_by_config = ''
-
 
 class Directory:
     def __init__(self, name, item_count, displayname=None):
         self.name = name
         self.item_count = item_count
-        if displayname:
-            self.displayname = displayname
-        else:
-            self.displayname = name
+        self.displayname = displayname or name
 
     def to_dict(self):
         return {'name': self.name, 'displayname': self.displayname, 'count': self.item_count}
 
 def mk_writeable_dir(path):
     try:
-        os.makedirs(path)
-    except FileExistsError:
-        pass
+        os.makedirs(path, exist_ok=True)
     except Exception as ex:
         logging.error("Could not create base folder (%s) because of access permissions: %s", path, ex)
         return None
     return path
-
 
 def init_base_dir(path_element):
     global VAR_PATH, CACHE_PATH
     logging.info('Initialize base directory %s', path_element)
     logging.debug('    HOME: %s', os.path.expanduser("~"))
     logging.debug('     PWD: %s', os.getcwd())
+
     var_dir = None
+    home_dir = os.path.expanduser("~") + path_element
 
     if not os.getcwd().endswith('/ycast'):
-        # specified working dir with /ycast has prio
-        try_path = os.path.expanduser("~") + path_element
-        logging.info('   try Home-Dir: %s', try_path)
-        var_dir = mk_writeable_dir(try_path)
+        logging.info('Trying Home-Dir: %s', home_dir)
+        var_dir = mk_writeable_dir(home_dir)
 
     if var_dir is None:
-        # avoid using root '/' and it's subdir
         if len(os.getcwd()) < 6:
-            logging.error("   len(PWD) < 6 (PWD is too small) < 6: '%s'", os.getcwd())
+            logging.error("len(PWD) < 6 (PWD is too short): '%s'", os.getcwd())
         else:
-            try_path = os.getcwd() + path_element
-            logging.info('   try Work-Dir: %s', try_path)
-            var_dir = mk_writeable_dir(os.getcwd() + path_element)
+            work_dir = os.getcwd() + path_element
+            logging.info('Trying Work-Dir: %s', work_dir)
+            var_dir = mk_writeable_dir(work_dir)
+
         if var_dir is None:
             sys.exit('YCast: ###### No usable directory found #######, I give up....')
-    logging.info('using var directory: %s', var_dir)
-    VAR_PATH = var_dir
-    CACHE_PATH = var_dir + '/cache'
-    return
 
+    logging.info('Using var directory: %s', var_dir)
+    VAR_PATH = var_dir
+    CACHE_PATH = os.path.join(var_dir, 'cache')
 
 def generate_stationid_with_prefix(uid, prefix):
     if not prefix or len(prefix) != 2:
@@ -71,8 +62,7 @@ def generate_stationid_with_prefix(uid, prefix):
     if not uid:
         logging.error("Missing station id for full station id generation")
         return None
-    return str(prefix) + '_' + str(uid)
-
+    return f'{prefix}_{uid}'
 
 def get_stationid_prefix(uid):
     if len(uid) < 4:
@@ -80,61 +70,44 @@ def get_stationid_prefix(uid):
         return None
     return uid[:2]
 
-
 def get_stationid_without_prefix(uid):
     if len(uid) < 4:
         logging.error("Could not extract stationid (Invalid station id length)")
         return None
     return uid[3:]
 
-
 def get_cache_path(cache_name):
-    cache_path = CACHE_PATH
-    if cache_name:
-        cache_path = CACHE_PATH + '/' + cache_name
+    cache_path = os.path.join(CACHE_PATH, cache_name) if cache_name else CACHE_PATH
     try:
-        os.makedirs(cache_path)
-    except FileExistsError:
-        pass
+        os.makedirs(cache_path, exist_ok=True)
     except PermissionError:
         logging.error("Could not create cache folders (%s) because of access permissions", cache_path)
         return None
     return cache_path
 
-
 def get_var_path():
     try:
-        os.makedirs(VAR_PATH)
-    except FileExistsError:
-        pass
+        os.makedirs(VAR_PATH, exist_ok=True)
     except PermissionError:
         logging.error("Could not create cache folders (%s) because of access permissions", VAR_PATH)
         return None
     return VAR_PATH
 
 def get_stations_file():
-    global stations_file_by_config
-    if stations_file_by_config:
-        return stations_file_by_config
-    return get_var_path() + '/stations.json'
-
+    return stations_file_by_config or os.path.join(get_var_path(), 'stations.json')
 
 def set_stations_file(stations_file):
     global stations_file_by_config
     if stations_file:
         stations_file_by_config = stations_file
 
-
 def get_checksum(feed, charlimit=12):
     hash_feed = feed.encode()
-    hash_object = hashlib.md5(hash_feed)
-    digest = hash_object.digest()
+    digest = hashlib.md5(hash_feed).digest()
     xor_fold = bytearray(digest[:8])
     for i, b in enumerate(digest[8:]):
         xor_fold[i] ^= b
-    digest_xor_fold = ''.join(format(x, '02x') for x in bytes(xor_fold))
-    return str(digest_xor_fold[:charlimit]).upper()
-
+    return ''.join(format(x, '02x') for x in xor_fold)[:charlimit].upper()
 
 def read_json_file(file_name):
     try:
@@ -146,11 +119,9 @@ def read_json_file(file_name):
         logging.error("JSON format error in '%s':\n    %s", file_name, e)
     return None
 
-
 def write_json_file(file_name, dictionary):
     try:
         with open(file_name, 'w') as f:
-            # no sort please
             json.dump(dictionary, f, indent=4)
             return True
     except json.JSONDecodeError as e:
@@ -159,8 +130,7 @@ def write_json_file(file_name, dictionary):
         logging.error("File not written '%s':\n    %s", file_name, ex)
     return False
 
-
-def readlns_txt_file(file_name):
+def read_lines_txt_file(file_name):
     try:
         with open(file_name, 'r') as f:
             return f.readlines()
@@ -168,8 +138,7 @@ def readlns_txt_file(file_name):
         logging.warning("TXT file '%s' not found", file_name)
     return None
 
-
-def writelns_txt_file(file_name, line_list):
+def write_lines_txt_file(file_name, line_list):
     try:
         with open(file_name, 'w') as f:
             f.writelines(line_list)
@@ -178,10 +147,9 @@ def writelns_txt_file(file_name, line_list):
         logging.error("File not written '%s':\n    %s", file_name, ex)
     return False
 
-
 def get_json_attr(json_obj, attr):
     try:
         return json_obj[attr]
-    except Exception as ex:
+    except KeyError as ex:
         logging.debug("json: attr '%s' not found: %s", attr, ex)
         return None
