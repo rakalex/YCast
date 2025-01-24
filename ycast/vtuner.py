@@ -2,16 +2,11 @@ import xml.etree.ElementTree as ET
 
 XML_HEADER = '<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>'
 
-
 def get_init_token():
     return '<EncryptedToken>0000000000000000</EncryptedToken>'
 
-
 def strip_https(url):
-    if url.startswith('https://'):
-        url = 'http://' + url[8:]
-    return url
-
+    return url.replace('https://', 'http://', 1) if url.startswith('https://') else url
 
 def add_bogus_parameter(url):
     """
@@ -20,8 +15,7 @@ def add_bogus_parameter(url):
     The original vTuner API hacks around that by adding a specific parameter or a bogus parameter like '?empty=' to
     the target URL.
     """
-    return url + '?vtuner=true'
-
+    return f'{url}?vtuner=true'
 
 class Page:
     def __init__(self):
@@ -47,7 +41,6 @@ class Page:
     def to_string(self):
         return XML_HEADER + ET.tostring(self.to_xml()).decode('utf-8')
 
-
 class Previous:
     def __init__(self, url):
         self.url = url
@@ -59,7 +52,6 @@ class Previous:
         ET.SubElement(item, 'UrlPreviousBackUp').text = add_bogus_parameter(self.url)
         return item
 
-
 class Display:
     def __init__(self, text):
         self.text = text
@@ -70,14 +62,12 @@ class Display:
         ET.SubElement(item, 'Display').text = self.text
         return item
 
-
 class Spacer:
 
     def to_xml(self):
         item = ET.Element('Item')
         ET.SubElement(item, 'ItemType').text = 'Spacer'
         return item
-
 
 class Search:
     def __init__(self, caption, url):
@@ -94,7 +84,6 @@ class Search:
         ET.SubElement(item, 'SearchButtonGo').text = "Search"
         ET.SubElement(item, 'SearchButtonCancel').text = "Cancel"
         return item
-
 
 class Directory:
     def __init__(self, title, destination, item_count=-1):
@@ -113,7 +102,6 @@ class Directory:
 
     def set_item_count(self, item_count):
         self.item_count = item_count
-
 
 class Station:
     def __init__(self, uid, name, description, url, icon, genre, location, mime, bitrate, bookmark):
@@ -137,10 +125,7 @@ class Station:
         ET.SubElement(item, 'ItemType').text = 'Station'
         ET.SubElement(item, 'StationId').text = self.uid
         ET.SubElement(item, 'StationName').text = self.name
-        if self.trackurl:
-            ET.SubElement(item, 'StationUrl').text = self.trackurl
-        else:
-            ET.SubElement(item, 'StationUrl').text = self.url
+        ET.SubElement(item, 'StationUrl').text = self.trackurl if self.trackurl else self.url
         ET.SubElement(item, 'StationDesc').text = self.description
         ET.SubElement(item, 'Logo').text = self.icon
         ET.SubElement(item, 'StationFormat').text = self.genre
