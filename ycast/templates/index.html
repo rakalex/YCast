@@ -6,6 +6,34 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>YCast Advanced</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">   
+    <style>
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 50;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.5);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 600px;
+            position: relative;
+        }
+        .close {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 24px;
+        }
+    </style>
 </head>
 
 <body class="bg-gray-100 text-gray-900">
@@ -44,11 +72,33 @@
 
             <!-- Bookmarks Section -->
             <div class="bg-white rounded-lg shadow-lg p-4">
-                <div class="mb-3">
+                <div class="mb-3 flex justify-between items-center">
                     <h3 class="text-lg font-semibold mb-2">Bookmarks</h3>
+                    <button id="openModalBtn" class="bg-blue-600 text-white p-2 rounded-md">Add Custom Station</button>
                 </div>
                 <ul id="bookmarkList" class="list-none p-0 m-0 max-h-70 overflow-auto border border-gray-300 rounded-md"></ul>
             </div>
+        </div>
+    </div>
+
+    <!-- Popup Modal -->
+    <div id="customUrlModal" class="modal">
+        <div class="modal-content">
+            <span id="closeModalBtn" class="close text-red-600 cursor-pointer">×</span>
+            <h3 class="text-lg font-semibold mb-2">Add Custom URL</h3>
+            <div class="mb-3">
+                <label for="customUrl" class="block mb-2">Custom URL:</label>
+                <input type="url" id="customUrl" class="form-input block w-full p-2 border border-gray-300 rounded-md" placeholder="Enter custom stream URL">
+            </div>
+            <div class="mb-3">
+                <label for="customName" class="block mb-2">Station Name:</label>
+                <input type="text" id="customName" class="form-input block w-full p-2 border border-gray-300 rounded-md" placeholder="Enter station name">
+            </div>
+            <div class="mb-3">
+                <label for="customIcon" class="block mb-2">Icon URL:</label>
+                <input type="url" id="customIcon" class="form-input block w-full p-2 border border-gray-300 rounded-md" placeholder="Enter icon URL">
+            </div>
+            <button id="addCustomUrlBtn" class="bg-blue-600 text-white p-2 rounded-md">Add Custom Station</button>
         </div>
     </div>
 
@@ -57,13 +107,27 @@
             const idRequestSrc = document.getElementById('idRequestSrc');
             const idLanOrCountSelect = document.getElementById('idLanOrCountSelect');
             const stationsearch = document.getElementById('stationsearch');
+            const openModalBtn = document.getElementById('openModalBtn');
+            const closeModalBtn = document.getElementById('closeModalBtn');
+            const customUrlModal = document.getElementById('customUrlModal');
 
             idRequestSrc.addEventListener('change', handleSourceChange);
             idLanOrCountSelect.addEventListener('change', handleParamChange);
             stationsearch.addEventListener('input', handleSearchInput);
+            openModalBtn.addEventListener('click', () => customUrlModal.style.display = 'block');
+            closeModalBtn.addEventListener('click', () => customUrlModal.style.display = 'none');
+            window.addEventListener('click', (event) => {
+                if (event.target == customUrlModal) {
+                    customUrlModal.style.display = 'none';
+                }
+            });
 
             idLanOrCountSelect.disabled = true;
             fetchStationList('', '', true);
+
+            // Add event listener for the custom URL button
+            const addCustomUrlBtn = document.getElementById('addCustomUrlBtn');
+            addCustomUrlBtn.addEventListener('click', handleAddCustomUrl);
         });
 
         const handleSourceChange = async (event) => {
@@ -231,6 +295,38 @@
                 console.log(data);
             } catch (error) {
                 console.error(error);
+            }
+        };
+
+        const handleAddCustomUrl = () => {
+            const customUrl = document.getElementById('customUrl').value;
+            const customName = document.getElementById('customName').value;
+            const customIcon = document.getElementById('customIcon').value;
+
+            if (customUrl && customName) {
+                const newStation = {
+                    name: customName,
+                    url: customUrl,
+                    description: 'Custom URL',
+                    icon: customIcon || ''  // Use custom icon URL if provided
+                };
+
+                const bookmarkList = document.getElementById('bookmarkList');
+                const listItem = createStationItem(newStation, true);
+                bookmarkList.appendChild(listItem);
+
+                // Optionally clear the input fields after adding the custom station
+                document.getElementById('customUrl').value = '';
+                document.getElementById('customName').value = '';
+                document.getElementById('customIcon').value = '';
+
+                // Save bookmarks
+                saveBookmarks();
+
+                // Close the modal
+                document.getElementById('customUrlModal').style.display = 'none';
+            } else {
+                alert('Please enter both a URL and a station name.');
             }
         };
     </script>
