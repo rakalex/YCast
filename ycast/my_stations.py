@@ -28,7 +28,7 @@ class Station:
         }
 
 def get_station_by_id(vtune_id):
-    stations_yaml = get_stations_yaml()
+    stations_yaml = get_stations_json()
     if stations_yaml:
         for category in stations_yaml:
             for station in get_stations_by_category(category):
@@ -36,11 +36,11 @@ def get_station_by_id(vtune_id):
                     return station
     return None
 
-def get_stations_yaml():
-    return generic.read_yaml_file(generic.get_stations_file())
+def get_stations_json():
+    return generic.read_json_file(generic.get_stations_file())
 
 def get_category_directories():
-    stations_yaml = get_stations_yaml()
+    stations_yaml = get_stations_json()
     categories = []
     if stations_yaml:
         for category in stations_yaml:
@@ -49,7 +49,7 @@ def get_category_directories():
     return categories
 
 def get_stations_by_category(category):
-    stations_yaml = get_stations_yaml()
+    stations_yaml = get_stations_json()
     stations = []
     if stations_yaml and category in stations_yaml:
         for station_name, station_urls in stations_yaml[category].items():

@@ -17,7 +17,7 @@ RUN pip3 install --break-system-packages .
 FROM alpine:latest
 
 # Install only runtime dependencies
-RUN apk add --no-cache python3 py3-pillow
+RUN apk add --no-cache python3 py3-flask
 
 # Copy the application from the builder stage
 COPY --from=builder /opt /opt
